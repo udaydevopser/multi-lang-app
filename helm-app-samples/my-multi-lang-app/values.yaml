@@ -1,0 +1,114 @@
+# Default values for my-multi-lang-app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# --- Application Configuration ---
+application:
+  name: "my-app"
+  # Set the application language: "java", "dotnet", "python", "react"
+  language: "java" # Default language
+  # Set the application type: "api" or "ui"
+  type: "api" # Default type
+
+  # Image configuration
+  image:
+    java: "openjdk:17-jdk-slim"
+    dotnet: "mcr.microsoft.com/dotnet/aspnet:8.0"
+    python: "python:3.9-slim"
+    react: "nginx:latest" # For serving static React build
+
+  # Default container port (e.g., for Java/DotNet)
+  port: 8080
+  # Specific port for Node.js/Python apps
+  nodePort: 3000
+
+  # Config file paths based on language
+  configPath:
+    java: "/etc/config/application.yml"
+    dotnet: "app/appsettings.json"
+    python: "/app/config.ini"
+    react: "/usr/share/nginx/html/config.js" # Example for React served by Nginx
+
+  # Health check paths
+  healthChecks:
+    java: "/actuator/health"
+    dotnet: "/health"
+    python: "/healthz"
+    react: "/index.html" # Simple check for static content
+
+# --- Resource Configuration ---
+resources:
+  # Default resources if not specified per language
+  default:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+  java:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+  dotnet:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+  python:
+    requests:
+      cpu: "150m"
+      memory: "256Mi"
+    limits:
+      cpu: "300m"
+      memory: "512Mi"
+
+  react: # Frontend apps usually need less
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+
+# --- Ingress Configuration ---
+ingress:
+  enabled: true
+  # Common Ingress annotations
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "false" # For demo simplicity
+
+  # UI specific routing
+  ui:
+    host: "ui.example.com"
+    path: "/"
+    # UI-specific annotations if any
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /$1 # Example rewrite for UI
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        more_set_headers "X-UI-App: true";
+
+  # API specific routing
+  api:
+    host: "api.example.com"
+    path: "/api/(.*)" # Regex path for API
+    # API-specific annotations if any
+    annotations:
+      nginx.ingress.kubernetes.io/auth-url: "http://auth-service.default.svc.cluster.local/auth"
+      nginx.ingress.kubernetes.io/auth-signin: "http://auth-service.default.svc.cluster.local/login"
+      nginx.ingress.kubernetes.io/rewrite-target: /$1 # Example rewrite for API
+
+# --- Conditional ConfigMaps & Secrets ---
+enableHeartbeatConfig: true # Set to false to not create the heartbeat configmap
+
+# For production, secrets should be managed securely (e.g., Sealed Secrets, Vault)
+# For this demo, we assume secrets are handled externally or are minimal.

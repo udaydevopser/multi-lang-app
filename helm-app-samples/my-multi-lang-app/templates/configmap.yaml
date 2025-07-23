@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "my-multi-lang-app.fullname" . }}-config
+  labels:
+    {{- include "my-multi-lang-app.labels" . | nindent 4 }}
+data:
+  # Example application configuration data (content would vary by language)
+  # This configmap is mounted by the deployment.
+  {{- if eq .Values.application.language "java" }}
+  application.yml: |
+    server:
+      port: 8080
+    spring:
+      application:
+        name: {{ .Values.application.name }}-java
+    config:
+      message: "Hello from Java!"
+  {{- else if eq .Values.application.language "dotnet" }}
+  appsettings.json: |
+    {
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      },
+      "AllowedHosts": "*",
+      "AppSettings": {
+        "Message": "Hello from .NET!"
+      }
+    }
+  {{- else if eq .Values.application.language "python" }}
+  config.ini: |
+    [app]
+    message = Hello from Python!
+    port = 3000
+  {{- else if eq .Values.application.language "react" }}
+  config.js: |
+    window.APP_CONFIG = {
+      API_URL: "http://api.example.com/api",
+      MESSAGE: "Hello from React UI!"
+    };
+  {{- end }}
+
+---
+{{- if .Values.enableHeartbeatConfig }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "my-multi-lang-app.fullname" . }}-heartbeat-config
+  labels:
+    {{- include "my-multi-lang-app.labels" . | nindent 4 }}
+data:
+  heartbeat.interval: "60s"
+  heartbeat.endpoint: "/healthz"
+{{- end }}

@@ -1,0 +1,46 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "my-multi-lang-app.fullname" . }}
+  labels:
+    {{- include "my-multi-lang-app.labels" . | nindent 4 }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- if eq .Values.application.type "ui" }}
+      {{- range $key, $value := .Values.ingress.ui.annotations }}
+    {{ $key }}: {{ $value | quote }}
+      {{- end }}
+    {{- else if eq .Values.application.type "api" }}
+      {{- range $key, $value := .Values.ingress.api.annotations }}
+    {{ $key }}: {{ $value | quote }}
+      {{- end }}
+    {{- end }}
+spec:
+  rules:
+    {{- if eq .Values.application.type "ui" }}
+    - host: {{ .Values.ingress.ui.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.ui.path | quote }}
+            pathType: Prefix # Or Exact, ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "my-multi-lang-app.fullname" . }}
+                port:
+                  name: http
+    {{- else if eq .Values.application.type "api" }}
+    - host: {{ .Values.ingress.api.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.api.path | quote }}
+            pathType: Prefix # Or Exact, ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "my-multi-lang-app.fullname" . }}
+                port:
+                  name: http
+    {{- end }}
+{{- end }}

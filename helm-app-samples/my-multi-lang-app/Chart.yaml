@@ -1,0 +1,11 @@
+apiVersion: v2
+name: my-multi-lang-app
+description: A Helm chart to demonstrate dynamic deployments for multi-language applications.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - kubernetes
+  - helm
+  - multi-language
+  - dynamic-deployment

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "my-multi-lang-app.fullname" . }}
+  labels:
+    {{- include "my-multi-lang-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.application.language }}
+spec:
+  type: ClusterIP # For demo, can be NodePort or LoadBalancer
+  ports:
+    - port: {{ if or (eq .Values.application.language "python") (eq .Values.application.language "react") }}
+                {{ .Values.application.nodePort }}
+              {{ else }}
+                {{ .Values.application.port }}
+              {{ end }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "my-multi-lang-app.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "my-multi-lang-app.fullname" . }}
+  labels:
+    {{- include "my-multi-lang-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ .Values.application.language }}
+spec:
+  replicas: 1 # For demo simplicity, can be dynamic
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "my-multi-lang-app.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "my-multi-lang-app.labels" . | nindent 8 }}
+        app.kubernetes.io/component: {{ .Values.application.language }}
+        # Add dynamic timestamp for tracking deployments
+        app.kubernetes.io/deployed-at: "{{ now | unixEpoch }}"
+    spec:
+      containers:
+        - name: {{ .Values.application.name }}-{{ .Values.application.language }}
+          image: "{{ get .Values.application.image .Values.application.language }}"
+          imagePullPolicy: IfNotPresent # For demo, can be Always
+
+          ports:
+            - name: http
+              containerPort: {{ if or (eq .Values.application.language "python") (eq .Values.application.language "react") }}
+                               {{ .Values.application.nodePort }}
+                             {{ else }}
+                               {{ .Values.application.port }}
+                             {{ end }}
+              protocol: TCP
+
+          # --- Dynamic Volume Mounts ---
+          volumeMounts:
+            - name: app-config
+              mountPath: {{ get .Values.application.configPath .Values.application.language }}
+              readOnly: true
+          
+          # --- Dynamic Resource Limits ---
+          resources:
+            requests:
+              {{- with (get .Values.resources .Values.application.language) }}
+              cpu: "{{ .requests.cpu }}"
+              memory: "{{ .requests.memory }}"
+              {{- else }}
+              cpu: "{{ .Values.resources.default.requests.cpu }}"
+              memory: "{{ .Values.resources.default.requests.memory }}"
+              {{- end }}
+            limits:
+              {{- with (get .Values.resources .Values.application.language) }}
+              cpu: "{{ .limits.cpu }}"
+              memory: "{{ .limits.memory }}"
+              {{- else }}
+              cpu: "{{ .Values.resources.default.limits.cpu }}"
+              memory: "{{ .Values.resources.default.limits.memory }}"
+              {{- end }}
+              
+          # --- Dynamic Health Checks ---
+          livenessProbe:
+            httpGet:
+              path: {{ get .Values.application.healthChecks .Values.application.language }}
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: {{ get .Values.application.healthChecks .Values.application.language }}
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+      volumes:
+        - name: app-config
+          configMap:
+            name: {{ include "my-multi-lang-app.fullname" . }}-config
