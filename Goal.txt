@@ -1,0 +1,26 @@
+Goal:
+deployments:
+1. Conditional sections for configuration files
+2. dotnet has different section of codes compare to java, or python, or etct. How to handle such
+3. VolumeMount: How to handle different config file path base on language(java, dotnet, react, etc) java(mountPath: /etc/config/application.yml), dotnet(app/appsettings.json), 
+4. Routing also, will be different base on UI(they dedicate hostnames for the application) vs API(they standardize the hostnames)
+5. Passing limits and resource base on the codes also (java, react, dotnet, )
+6. How to set healthchecks, timestamps, etc dynamically also base on the deployment
+
+Service:
+Each service uses different port. So Port might be different base on application, e.g java 8080, dotnet=8080, python=3000, react=3000, so it could vary base on application being deployed.
+
+Ingres:
+variations base on the app being deployed
+1a. Could have annotation which will be different, paths could be different, path wide card could be different
+
+Configmap & Secrets:
+Not all applications will need secrets, so only create when it is needed, hearbeat config, UI, etc. 
+
+Also:
+1. Then to apply resources that has the right values
+2. waiting until pods is able to receive traffic, all in ready state, then it will mark the deployment as complete
+
+Two options for templating/achieving the above:
+1. Ansible: good for templating, passing in and updating values. With this we don't have to explicitly do lot of training, can you ginger templating that can be use to do this kind of conditional update
+2. Helm: almost similar but different as to syntax and how to manage the project.

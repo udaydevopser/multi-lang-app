@@ -19,6 +19,10 @@ spec:
         # Add dynamic timestamp for tracking deployments
         app.kubernetes.io/deployed-at: "{{ now | unixEpoch }}"
     spec:
+      tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
       containers:
         - name: {{ .Values.application.name }}-{{ .Values.application.language }}
           image: "{{ get .Values.application.image .Values.application.language }}"
